@@ -1,4 +1,4 @@
-package jsoned
+package mapper
 
 import "encoding/json"
 
