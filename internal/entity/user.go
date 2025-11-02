@@ -8,5 +8,6 @@ type User struct {
 	TotalSub    int
 	PromocodeID int
 	UserName    string
+	UserTgID    int64
 	FirstTime   time.Time
 }

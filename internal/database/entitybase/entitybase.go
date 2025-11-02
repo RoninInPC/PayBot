@@ -7,3 +7,6 @@ type EntityBase[Anything any] interface {
 	Delete(Anything) error
 	GetAll() ([]Anything, error)
 }
+
+// TODO
+//Написать CRUD + юнит тесты
