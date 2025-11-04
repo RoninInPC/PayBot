@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -8,13 +9,13 @@ import (
 	"time"
 )
 
-func TelegramFormat[Anything any](array []Anything) string {
+func TelegramFormat[Anything any](array []Anything) (string, error) {
 	if len(array) == 0 {
-		return "Нет данных."
+		return "", errors.New("Нет данных.")
 	}
 	t := reflect.TypeOf(array[0])
 	if t.Kind() != reflect.Struct {
-		return "Ошибка: тип должен быть структурой."
+		return "", errors.New("Ошибка: тип должен быть структурой.")
 	}
 	var headers []string
 	for i := 0; i < t.NumField(); i++ {
@@ -24,7 +25,7 @@ func TelegramFormat[Anything any](array []Anything) string {
 		}
 	}
 	if len(headers) == 0 {
-		return "Ошибка: нет экспортированных полей."
+		return "", errors.New("Ошибка: нет экспортированных полей.")
 	}
 
 	var sections []string
@@ -77,7 +78,7 @@ func TelegramFormat[Anything any](array []Anything) string {
 	}
 
 	if len(sections) == 0 {
-		return "Нет данных."
+		return "", errors.New("Нет данных.")
 	}
-	return strings.Join(sections, "\n\n")
+	return strings.Join(sections, "\n\n"), nil
 }

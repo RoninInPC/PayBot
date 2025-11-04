@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"reflect"
@@ -11,13 +12,13 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func ToExcel[Anything any](array []Anything) (filename string) {
+func ToExcel[Anything any](array []Anything) (filename string, err error) {
 	if len(array) == 0 {
-		return ""
+		return "", errors.New("Not info")
 	}
 	t := reflect.TypeOf(array[0])
 	if t.Kind() != reflect.Struct {
-		panic("ToExcel: Anything должен быть типом структуры")
+		return "", errors.New("ToExcel: Anything должен быть типом структуры")
 	}
 	var headers []string
 	for i := 0; i < t.NumField(); i++ {
@@ -27,23 +28,19 @@ func ToExcel[Anything any](array []Anything) (filename string) {
 		}
 	}
 	if len(headers) == 0 {
-		panic("ToExcel: Не найдено экспортированных полей в структуре")
+		return "", errors.New("ToExcel: Не найдено экспортированных полей в структуре")
 	}
 	f := excelize.NewFile()
-	defer func() {
-		if err := f.Close(); err != nil {
-			panic(fmt.Sprintf("ToExcel: Ошибка закрытия файла: %v", err))
-		}
-	}()
+	defer f.Close()
 	sheetName := f.GetSheetName(0)
 	f.SetActiveSheet(0)
 	for j, header := range headers {
 		cellName, err := excelize.CoordinatesToCellName(j+1, 1)
 		if err != nil {
-			panic(fmt.Sprintf("ToExcel: Ошибка генерации имени ячейки: %v", err))
+			return "", errors.New(fmt.Sprintf("ToExcel: Ошибка генерации имени ячейки: %v", err))
 		}
 		if err := f.SetCellValue(sheetName, cellName, header); err != nil {
-			panic(fmt.Sprintf("ToExcel: Ошибка установки заголовка '%s': %v", header, err))
+			return "", errors.New(fmt.Sprintf("ToExcel: Ошибка установки заголовка '%s': %v", header, err))
 		}
 	}
 	for i, item := range array {
@@ -55,7 +52,7 @@ func ToExcel[Anything any](array []Anything) (filename string) {
 			}
 			cellName, err := excelize.CoordinatesToCellName(j+1, i+2)
 			if err != nil {
-				panic(fmt.Sprintf("ToExcel: Ошибка генерации имени ячейки: %v", err))
+				return "", errors.New(fmt.Sprintf("ToExcel: Ошибка генерации имени ячейки: %v", err))
 			}
 			var fallback string
 			switch field.Kind() {
@@ -79,38 +76,38 @@ func ToExcel[Anything any](array []Anything) (filename string) {
 				fallback = fmt.Sprintf("%v", field.Interface())
 			}
 			if err := f.SetCellValue(sheetName, cellName, fallback); err != nil {
-				panic(fmt.Sprintf("ToExcel: Ошибка установки значения '%s': %v", fallback, err))
+				return "", errors.New(fmt.Sprintf("ToExcel: Ошибка установки значения '%s': %v", fallback, err))
 			}
 		}
 	}
 	filename = "output.xlsx"
 	if err := f.SaveAs(filename); err != nil {
-		panic(fmt.Sprintf("ToExcel: Ошибка сохранения файла '%s': %v", filename, err))
+		return "", errors.New(fmt.Sprintf("ToExcel: Ошибка сохранения файла '%s': %v", filename, err))
 	}
-	return filename
+	return filename, nil
 }
 
-func FromExcel[Anything any](filename string) []Anything {
+func FromExcel[Anything any](filename string) ([]Anything, error) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		panic(fmt.Sprintf("FromExcel: Файл '%s' не найден", filename))
+		return nil, errors.New(fmt.Sprintf("FromExcel: Файл '%s' не найден", filename))
 	}
 	f, err := excelize.OpenFile(filename)
 	if err != nil {
-		panic(fmt.Sprintf("FromExcel: Ошибка открытия файла '%s': %v", filename, err))
+		return nil, errors.New(fmt.Sprintf("FromExcel: Ошибка открытия файла '%s': %v", filename, err))
 	}
 	defer f.Close()
 	sheetName := f.GetSheetName(0)
 	rows, err := f.GetRows(sheetName)
 	if err != nil {
-		panic(fmt.Sprintf("FromExcel: Ошибка чтения строк из листа '%s': %v", sheetName, err))
+		return nil, errors.New(fmt.Sprintf("FromExcel: Ошибка чтения строк из листа '%s': %v", sheetName, err))
 	}
 	if len(rows) == 0 {
-		return nil
+		return nil, errors.New("Empty Rows")
 	}
 	headers := rows[0]
 	t := reflect.TypeOf((*Anything)(nil)).Elem()
 	if t.Kind() != reflect.Struct {
-		panic("FromExcel: Anything должен быть типом структуры")
+		return nil, errors.New("FromExcel: Anything должен быть типом структуры")
 	}
 	var result []Anything
 	for i := 1; i < len(rows); i++ {
@@ -168,5 +165,5 @@ func FromExcel[Anything any](filename string) []Anything {
 		newVal := rv.Interface().(Anything)
 		result = append(result, newVal)
 	}
-	return result
+	return result, nil
 }

@@ -18,7 +18,7 @@ func TestToExcel(t *testing.T) {
 		{ID: 2, ContainsSub: false, TotalSub: 0, PromocodeID: 102, UserName: "bob_user", FirstTime: time.Date(2023, 2, 20, 14, 45, 0, 0, time.UTC)},
 	}
 
-	filename := ToExcel[entity.User](users)
+	filename, _ := ToExcel[entity.User](users)
 	defer os.Remove(filename)
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
@@ -54,10 +54,10 @@ func TestFromExcel(t *testing.T) {
 		{ID: 2, ContainsSub: false, TotalSub: 0, PromocodeID: 102, UserName: "bob_user", FirstTime: time.Date(2023, 2, 20, 14, 45, 0, 0, time.UTC)},
 	}
 
-	filename := ToExcel[entity.User](originalUsers)
+	filename, _ := ToExcel[entity.User](originalUsers)
 	defer os.Remove(filename)
 
-	imported := FromExcel[entity.User](filename)
+	imported, _ := FromExcel[entity.User](filename)
 
 	if len(imported) != len(originalUsers) {
 		t.Errorf("Ожидали %d записей, получили %d", len(originalUsers), len(imported))
@@ -88,7 +88,7 @@ func TestFromExcel(t *testing.T) {
 
 func TestToExcelEmpty(t *testing.T) {
 	var users []entity.User
-	filename := ToExcel[entity.User](users)
+	filename, _ := ToExcel[entity.User](users)
 	if filename != "" {
 		t.Errorf("Ожидали пустое имя файла для пустого слайса, получили %s", filename)
 	}
@@ -100,7 +100,7 @@ func TestFromExcelEmptyFile(t *testing.T) {
 	f.SaveAs(emptyFile)
 	defer os.Remove(emptyFile)
 
-	imported := FromExcel[entity.User](emptyFile)
+	imported, _ := FromExcel[entity.User](emptyFile)
 	if len(imported) != 0 {
 		t.Errorf("Ожидали пустой слайс для пустого файла, получили %d", len(imported))
 	}
