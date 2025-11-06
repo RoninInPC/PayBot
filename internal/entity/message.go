@@ -1,10 +1,25 @@
 package entity
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+type TypeFile int
+
+const (
+	Photo      TypeFile = 0
+	Doc        TypeFile = 1
+	Video      TypeFile = 2
+	Audio      TypeFile = 3
+	Voice      TypeFile = 4
+	VideoVoice TypeFile = 5
+)
+
+type File struct {
+	Filename string
+	Type     TypeFile
+}
 
 type MessageFromAdminBot struct {
-	TelegramID int
-	tgbotapi.Message
+	TelegramID int64
+	Text       string
+	Files      []File
 }
 
 type MessageFromUserBot struct {
