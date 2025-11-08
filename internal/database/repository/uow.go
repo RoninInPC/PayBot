@@ -11,8 +11,14 @@ import (
 )
 
 type unitOfWork struct {
-	tx       pgx.Tx
-	userRepo database.UserRepository
+	tx            pgx.Tx
+	userRepo      database.UserRepository
+	paymentRepo   database.PaymentRepository
+	subscrRepo    database.SubscriptionRepository
+	tariffRepo    database.TariffRepository
+	resourceRepo  database.ResourceRepository
+	promocodeRepo database.PromocodeRepository
+	requisiteRepo database.RequisiteRepository
 }
 
 func (u unitOfWork) UserRepo() database.UserRepository {
@@ -71,7 +77,13 @@ func (f UnitOfWorkFactory) New(ctx context.Context, level pgx.TxIsoLevel, fn fun
 
 func (f UnitOfWorkFactory) createUnitOfWork(tx pgx.Tx) database.UnitOfWork {
 	return unitOfWork{
-		tx:       tx,
-		userRepo: NewUserRepository(tx),
+		tx:            tx,
+		userRepo:      NewUserRepository(tx),
+		paymentRepo:   NewPaymentRepository(tx),
+		subscrRepo:    NewSubscriptionRepository(tx),
+		tariffRepo:    NewTariffRepository(tx),
+		resourceRepo:  NewResourceRepository(tx),
+		promocodeRepo: NewPromocodeRepository(tx),
+		requisiteRepo: NewRequisiteRepository(tx),
 	}
 }

@@ -67,3 +67,25 @@ type UnitOfWork interface {
 type UnitOfWorkFactory interface {
 	New(ctx context.Context, isoLevel pgx.TxIsoLevel) (UnitOfWork, error)
 }
+
+/*
+Пример использования UnitOfWork:
+
+pool - объект созданный либой "github.com/jackc/pgx/v5" после подключения к бд
+
+UOWFactory = repository.NewUnitOfWorkFactory(pool)
+
+err = UOWFactory.New(ctx, pgx.ReadCommitted, func(uow storage.UnitOfWork) error {
+		users, err := uow.UserRepo().SelectAll(ctx)
+		if err != nil {
+			return errors.Wrap(err, "UserRepo.SelectAll")
+		}
+	})
+if err != nil {
+	return errors.Wrap(err, "UOWFactory.New")
+}
+
+Метод New внутри сам откроет транзакцию  и вызовет Commit или Rollback в зависимости от того,
+	вернул ли передаваемый метод func(uow storage.UnitOfWork) error ошибку или нет.
+Таким образом избавляемся от необходимости самостоятельно управлять транзакциями.
+*/
