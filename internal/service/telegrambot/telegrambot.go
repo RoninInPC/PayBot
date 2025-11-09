@@ -3,12 +3,12 @@ package telegrambot
 import (
 	"github.com/and3rson/telemux/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"main/internal/telegramentity"
+	"main/internal/telegram"
 )
 
 type TelegramBot struct {
-	telegramentity.Goroutines
-	telegramentity.TelegramCommands
+	telegram.Goroutines
+	telegram.TelegramCommands
 	bot *tgbotapi.BotAPI
 }
 
@@ -18,9 +18,11 @@ func InitBot(token string) (*TelegramBot, error) {
 		return nil, err
 	}
 	return &TelegramBot{
-		Goroutines:       *telegramentity.InitGoroutines(),
-		TelegramCommands: telegramentity.TelegramCommands{telegramentity.MakeButtonAnalyser()},
-		bot:              api}, nil
+		Goroutines: *telegram.InitGoroutines(),
+		TelegramCommands: telegram.TelegramCommands{
+			telegram.MakeButtonAnalyser(),
+			telegram.MakeUserRequestConfirmed(nil)},
+		bot: api}, nil
 }
 
 func (telegramBot *TelegramBot) initBotMenu() {

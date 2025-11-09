@@ -1,4 +1,4 @@
-package telegramentity
+package telegram
 
 import (
 	tm "github.com/and3rson/telemux/v2"
