@@ -9,6 +9,7 @@ const (
 	Audio      TypeFile = 3
 	Voice      TypeFile = 4
 	VideoVoice TypeFile = 5
+	Animation  TypeFile = 6
 )
 
 type File struct {
