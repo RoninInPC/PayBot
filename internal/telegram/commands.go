@@ -1,8 +1,10 @@
-package telegramentity
+package telegram
 
 import (
 	telemux "github.com/and3rson/telemux/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"main/internal/database/entitybase"
+	"main/internal/entity"
 	"strings"
 )
 
@@ -53,7 +55,7 @@ func MakeFullCommand(name string, description string, filter telemux.FilterFunc,
 
 func MakeButtonAnalyser() TelegramCommand {
 	return TelegramCommand{
-		"ButtonAnalyser",
+		"Analyser",
 		"",
 		func(u *telemux.Update) bool {
 			return u.CallbackQuery != nil
@@ -75,6 +77,41 @@ func MakeButtonAnalyser() TelegramCommand {
 						}
 					}
 				}
+			},
+		},
+	}
+}
+
+func MakeUserRequestConfirmed(base entitybase.EntityBase[entity.User]) TelegramCommand {
+	return TelegramCommand{
+		"Request",
+		"",
+		func(u *telemux.Update) bool {
+			return u.ChatJoinRequest != nil
+		},
+		UserCheckActionStruct{
+			Base: base,
+			SimpleAction: func(base entitybase.EntityBase[entity.User], u *telemux.Update) {
+				if base != nil {
+					u.Bot.Send(tgbotapi.DeclineChatJoinRequest{
+						ChatConfig: tgbotapi.ChatConfig{ChatID: u.ChatJoinRequest.Chat.ID},
+						UserID:     u.ChatJoinRequest.From.ID,
+					})
+					return
+				}
+				user, err := base.Get(entity.User{UserName: u.ChatJoinRequest.From.UserName})
+				if err != nil || user.ID == 0 {
+					u.Bot.Send(tgbotapi.DeclineChatJoinRequest{
+						ChatConfig: tgbotapi.ChatConfig{ChatID: u.ChatJoinRequest.Chat.ID},
+						UserID:     u.ChatJoinRequest.From.ID,
+					})
+					return
+				}
+
+				u.Bot.Send(tgbotapi.ApproveChatJoinRequestConfig{
+					ChatConfig: tgbotapi.ChatConfig{ChatID: u.ChatJoinRequest.Chat.ID},
+					UserID:     u.ChatJoinRequest.From.ID,
+				})
 			},
 		},
 	}

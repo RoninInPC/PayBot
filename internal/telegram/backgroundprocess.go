@@ -1,4 +1,4 @@
-package telegramentity
+package telegram
 
 type Running chan bool
 
