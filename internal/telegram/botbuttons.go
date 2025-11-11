@@ -22,11 +22,15 @@ func init() {
 }
 
 // Создание кнопки с отсылаемым текстом и дополнительным действием
-func MakeButton(text string, request string, action Action) tgbotapi.InlineKeyboardButton {
+func MakeInlineButton(text string, request string, action Action) tgbotapi.InlineKeyboardButton {
 	str := text + request + strconv.Itoa(len(request)+len(text))
 	globalUsefulContentButtons[hash.MD5(str)] =
 		RequestFromButton{RequestMessage: request, SecondAction: action}
 	return tgbotapi.NewInlineKeyboardButtonData(text, hash.MD5(str))
+}
+
+func MakeButtonWebApp(text string, url string) tgbotapi.KeyboardButton {
+	return tgbotapi.NewKeyboardButtonWebApp(text, tgbotapi.WebAppInfo{URL: url})
 }
 
 func GetGlobalUsefulContentButtons() UsefulContentButtons {
