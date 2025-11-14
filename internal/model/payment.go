@@ -3,7 +3,8 @@ package model
 import "time"
 
 type Payment struct {
-	UserID       int64
+	Id           int
+	UserTgID     int64
 	Amount       int64
 	Timestamp    time.Time
 	Status       string

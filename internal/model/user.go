@@ -1,10 +1,12 @@
 package model
 
+import "time"
+
 type User struct {
 	Id          int64
+	TgID        int64
 	Username    *string
-	FirstName   string
+	FirstTime   time.Time
 	TotalSub    int
-	ContainsSub int
-	PromocodeID int64
+	ContainsSub bool
 }

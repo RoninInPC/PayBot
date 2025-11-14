@@ -25,6 +25,30 @@ func (u unitOfWork) UserRepo() database.UserRepository {
 	return u.userRepo
 }
 
+func (u unitOfWork) PaymentRepo() database.PaymentRepository {
+	return u.paymentRepo
+}
+
+func (u unitOfWork) SubscriptionRepo() database.SubscriptionRepository {
+	return u.subscrRepo
+}
+
+func (u unitOfWork) TariffRepo() database.TariffRepository {
+	return u.tariffRepo
+}
+
+func (u unitOfWork) ResourceRepo() database.ResourceRepository {
+	return u.resourceRepo
+}
+
+func (u unitOfWork) PromocodeRepo() database.PromocodeRepository {
+	return u.promocodeRepo
+}
+
+func (u unitOfWork) RequisiteRepo() database.RequisiteRepository {
+	return u.requisiteRepo
+}
+
 func (u unitOfWork) Commit(ctx context.Context) error {
 	if err := u.tx.Commit(ctx); err != nil {
 		return errors.Wrap(err, "tx.Commit")
