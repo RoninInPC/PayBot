@@ -37,7 +37,7 @@ func TestToExcel(t *testing.T) {
 		t.Fatalf("Не удалось прочитать строки: %v", err)
 	}
 
-	expectedHeaders := []string{"ID", "ContainsSub", "TotalSub", "PromocodeID", "UserName", "FirstTime"}
+	expectedHeaders := []string{"Id", "ContainsSub", "TotalSub", "PromocodeID", "UserName", "FirstTime"}
 	if len(rows) < 1 || !reflect.DeepEqual(rows[0], expectedHeaders) {
 		t.Errorf("Ожидали заголовки %v, получили %v", expectedHeaders, rows[0])
 	}
@@ -66,7 +66,7 @@ func TestFromExcel(t *testing.T) {
 	for i, orig := range originalUsers {
 		imp := imported[i]
 		if orig.ID != imp.ID {
-			t.Errorf("ID: ожидали %d, получили %d", orig.ID, imp.ID)
+			t.Errorf("Id: ожидали %d, получили %d", orig.ID, imp.ID)
 		}
 		if orig.ContainsSub != imp.ContainsSub {
 			t.Errorf("ContainsSub: ожидали %t, получили %t", orig.ContainsSub, imp.ContainsSub)

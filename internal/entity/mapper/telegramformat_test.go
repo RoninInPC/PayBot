@@ -13,7 +13,7 @@ func TestTelegramFormat(t *testing.T) {
 	}
 	markdown, _ := TelegramFormat[entity.User](users)
 	expectedParts := []string{
-		"*ID* - 1",
+		"*Id* - 1",
 		"*ContainsSub* - true",
 		"*TotalSub* - 5",
 		"*PromocodeID* - 101",
