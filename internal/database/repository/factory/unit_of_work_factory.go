@@ -1,4 +1,4 @@
-package database
+package factory
 
 import (
 	"context"
@@ -71,13 +71,13 @@ type UnitOfWork interface {
 	ResourceRepo() ResourceRepository
 	PromocodeRepo() PromocodeRepository
 	RequisiteRepo() RequisiteRepository
-
 	Commit(ctx context.Context) error
 	Rollback(ctx context.Context) error
 }
 
 type UnitOfWorkFactory interface {
-	New(ctx context.Context, isoLevel pgx.TxIsoLevel) (UnitOfWork, error)
+	New(ctx context.Context, isoLevel pgx.TxIsoLevel, fn func(uow UnitOfWork) error) error
+	Get(ctx context.Context, isoLevel pgx.TxIsoLevel) (UnitOfWork, error)
 }
 
 /*

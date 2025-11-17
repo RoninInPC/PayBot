@@ -2,50 +2,49 @@ package repository
 
 import (
 	"context"
+	"main/internal/database/repository/factory"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
-
-	"main/internal/database"
 )
 
 type unitOfWork struct {
 	tx            pgx.Tx
-	userRepo      database.UserRepository
-	paymentRepo   database.PaymentRepository
-	subscrRepo    database.SubscriptionRepository
-	tariffRepo    database.TariffRepository
-	resourceRepo  database.ResourceRepository
-	promocodeRepo database.PromocodeRepository
-	requisiteRepo database.RequisiteRepository
+	userRepo      factory.UserRepository
+	paymentRepo   factory.PaymentRepository
+	subscrRepo    factory.SubscriptionRepository
+	tariffRepo    factory.TariffRepository
+	resourceRepo  factory.ResourceRepository
+	promocodeRepo factory.PromocodeRepository
+	requisiteRepo factory.RequisiteRepository
 }
 
-func (u unitOfWork) UserRepo() database.UserRepository {
+func (u unitOfWork) UserRepo() factory.UserRepository {
 	return u.userRepo
 }
 
-func (u unitOfWork) PaymentRepo() database.PaymentRepository {
+func (u unitOfWork) PaymentRepo() factory.PaymentRepository {
 	return u.paymentRepo
 }
 
-func (u unitOfWork) SubscriptionRepo() database.SubscriptionRepository {
+func (u unitOfWork) SubscriptionRepo() factory.SubscriptionRepository {
 	return u.subscrRepo
 }
 
-func (u unitOfWork) TariffRepo() database.TariffRepository {
+func (u unitOfWork) TariffRepo() factory.TariffRepository {
 	return u.tariffRepo
 }
 
-func (u unitOfWork) ResourceRepo() database.ResourceRepository {
+func (u unitOfWork) ResourceRepo() factory.ResourceRepository {
 	return u.resourceRepo
 }
 
-func (u unitOfWork) PromocodeRepo() database.PromocodeRepository {
+func (u unitOfWork) PromocodeRepo() factory.PromocodeRepository {
 	return u.promocodeRepo
 }
 
-func (u unitOfWork) RequisiteRepo() database.RequisiteRepository {
+func (u unitOfWork) RequisiteRepo() factory.RequisiteRepository {
 	return u.requisiteRepo
 }
 
@@ -75,7 +74,7 @@ func NewUnitOfWorkFactory(pool *pgxpool.Pool) UnitOfWorkFactory {
 	}
 }
 
-func (f UnitOfWorkFactory) New(ctx context.Context, level pgx.TxIsoLevel, fn func(uow database.UnitOfWork) error) error {
+func (f UnitOfWorkFactory) New(ctx context.Context, level pgx.TxIsoLevel, fn func(uow factory.UnitOfWork) error) error {
 	tx, err := f.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: level})
 	if err != nil {
 		return errors.Wrap(err, "pool.BeginTx")
@@ -99,7 +98,17 @@ func (f UnitOfWorkFactory) New(ctx context.Context, level pgx.TxIsoLevel, fn fun
 	return nil
 }
 
-func (f UnitOfWorkFactory) createUnitOfWork(tx pgx.Tx) database.UnitOfWork {
+func (f UnitOfWorkFactory) Get(ctx context.Context, level pgx.TxIsoLevel) (factory.UnitOfWork, error) {
+	tx, err := f.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: level})
+	if err != nil {
+		return nil, errors.Wrap(err, "pool.BeginTx")
+	}
+
+	uow := f.createUnitOfWork(tx)
+	return uow, nil
+}
+
+func (f UnitOfWorkFactory) createUnitOfWork(tx pgx.Tx) factory.UnitOfWork {
 	return unitOfWork{
 		tx:            tx,
 		userRepo:      NewUserRepository(tx),
