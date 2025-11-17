@@ -2,8 +2,7 @@ package telegram
 
 import (
 	"github.com/and3rson/telemux/v2"
-	"main/internal/database/entitybase"
-	"main/internal/entity"
+	"main/internal/database/repository/factory"
 )
 
 type Action interface {
@@ -20,13 +19,13 @@ func (s SimpleActionStruct) Action(u *telemux.Update) {
 	s.SimpleAction(u)
 }
 
-type UserCheckAction func(base entitybase.EntityBase[entity.User], u *telemux.Update)
+type UserCheckAction func(factory factory.UnitOfWorkFactory, u *telemux.Update)
 
 type UserCheckActionStruct struct {
-	Base         entitybase.EntityBase[entity.User]
+	Factory      factory.UnitOfWorkFactory
 	SimpleAction UserCheckAction
 }
 
 func (s UserCheckActionStruct) Action(u *telemux.Update) {
-	s.SimpleAction(s.Base, u)
+	s.SimpleAction(s.Factory, u)
 }

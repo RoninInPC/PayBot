@@ -18,6 +18,10 @@ func (r *RedisSet) Delete(name, value string) error {
 	return r.client.SRem(name, value).Err()
 }
 
+func (r *RedisSet) Contains(name, value string) (bool, error) {
+	return r.client.SIsMember(name, value).Result()
+}
+
 func (r *RedisSet) Clear(name string) error {
 	return r.client.Del(name).Err()
 }
