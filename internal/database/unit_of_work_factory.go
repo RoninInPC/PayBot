@@ -63,6 +63,10 @@ type RequisiteRepository interface {
 	Delete(ctx context.Context, requisites []model.Requisite) error
 }
 
+type FeatureRepository interface {
+	SelectUsersByTariff(ctx context.Context, tariffID int64) ([]model.User, error)
+}
+
 type UnitOfWork interface {
 	UserRepo() UserRepository
 	PaymentRepo() PaymentRepository

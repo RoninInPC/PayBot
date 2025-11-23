@@ -38,13 +38,7 @@ func (r *PaymentRepository) Upsert(ctx context.Context, payments []model.Payment
 	}
 
 	sql, args, err := query.
-		Suffix(`
-		ON CONFLICT (user_tg_id) DO UPDATE SET
-			amount = EXCLUDED.amount,
-			timestamp = EXCLUDED.timestamp,
-			status = EXCLUDED.status,
-			receipt_photo = EXCLUDED.receipt_photo
-		RETURNING id, user_tg_id, amount, timestamp, status, receipt_photo`).
+		Suffix(`RETURNING id, user_tg_id, amount, timestamp, status, receipt_photo`).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
@@ -89,9 +83,9 @@ func (r *PaymentRepository) SelectByUserTgID(ctx context.Context, userTgIDs []in
 		return nil, nil
 	}
 
-	sql, args, err := squirrel.Select("id", "user_id", "amount", "timestamp", "status", "receipt_photo").
+	sql, args, err := squirrel.Select("id", "user_tg_id", "amount", "timestamp", "status", "receipt_photo").
 		From("payments").
-		Where(squirrel.Eq{"user_id": userTgIDs}).
+		Where(squirrel.Eq{"user_tg_id": userTgIDs}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
@@ -131,7 +125,7 @@ func (r *PaymentRepository) SelectByUserTgID(ctx context.Context, userTgIDs []in
 }
 
 func (r *PaymentRepository) SelectAll(ctx context.Context) ([]model.Payment, error) {
-	sql, args, err := squirrel.Select("id", "user_id", "amount", "timestamp", "status", "receipt_photo").
+	sql, args, err := squirrel.Select("id", "user_tg_id", "amount", "timestamp", "status", "receipt_photo").
 		From("payments").
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
@@ -182,7 +176,7 @@ func (r *PaymentRepository) Delete(ctx context.Context, payments []model.Payment
 	}
 
 	sql, args, err := squirrel.Delete("payments").
-		Where(squirrel.Eq{"user_id": userIDs}).
+		Where(squirrel.Eq{"user_tg_id": userIDs}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {

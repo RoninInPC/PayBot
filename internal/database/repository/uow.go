@@ -19,6 +19,7 @@ type unitOfWork struct {
 	resourceRepo  database.ResourceRepository
 	promocodeRepo database.PromocodeRepository
 	requisiteRepo database.RequisiteRepository
+	featureRepo   database.FeatureRepository
 }
 
 func (u unitOfWork) UserRepo() database.UserRepository {
@@ -47,6 +48,10 @@ func (u unitOfWork) PromocodeRepo() database.PromocodeRepository {
 
 func (u unitOfWork) RequisiteRepo() database.RequisiteRepository {
 	return u.requisiteRepo
+}
+
+func (u unitOfWork) FeatureRepo() database.FeatureRepository {
+	return u.featureRepo
 }
 
 func (u unitOfWork) Commit(ctx context.Context) error {
@@ -109,5 +114,6 @@ func (f UnitOfWorkFactory) createUnitOfWork(tx pgx.Tx) database.UnitOfWork {
 		resourceRepo:  NewResourceRepository(tx),
 		promocodeRepo: NewPromocodeRepository(tx),
 		requisiteRepo: NewRequisiteRepository(tx),
+		featureRepo:   NewFeatureRepository(tx),
 	}
 }

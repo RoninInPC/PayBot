@@ -213,7 +213,7 @@ func (r *ResourceRepository) Delete(ctx context.Context, resources []model.Resou
 		ids = append(ids, resource.Id)
 	}
 
-	sql, args, err := squirrel.Delete("users").
+	sql, args, err := squirrel.Delete("resources").
 		Where(squirrel.Eq{"id": ids}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()

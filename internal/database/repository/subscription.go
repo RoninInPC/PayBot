@@ -227,7 +227,7 @@ func (r *SubscriptionRepository) Delete(ctx context.Context, subscriptions []mod
 		tgIDs = append(tgIDs, sub.UserTgID)
 	}
 
-	sql, args, err := squirrel.Delete("users").
+	sql, args, err := squirrel.Delete("subscriptions").
 		Where(squirrel.Eq{"user_tg_id": tgIDs}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
