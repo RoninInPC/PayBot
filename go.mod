@@ -11,7 +11,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/xuri/excelize/v2 v2.10.0
-	golang.org/x/text v0.30.0
+	golang.org/x/text v0.31.0
 	gopkg.in/ini.v1 v1.67.0
 )
 
@@ -83,3 +83,5 @@ require (
 	golang.org/x/sys v0.37.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 => github.com/RoninInPC/telegram-bot-api/v5 v5.5.2
