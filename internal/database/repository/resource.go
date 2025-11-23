@@ -25,11 +25,10 @@ func (r *ResourceRepository) Upsert(ctx context.Context, resources []model.Resou
 	}
 
 	query := squirrel.Insert("resources").
-		Columns("id", "chat_id", "description")
+		Columns("chat_id", "description")
 
 	for _, resource := range resources {
 		query = query.Values(
-			resource.Id,
 			resource.ChatID,
 			resource.Description,
 		)

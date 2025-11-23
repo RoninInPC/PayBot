@@ -25,11 +25,10 @@ func (r *RequisiteRepository) Upsert(ctx context.Context, requisites []model.Req
 	}
 
 	query := squirrel.Insert("requisites").
-		Columns("id", "name", "link", "content", "photo")
+		Columns("name", "link", "content", "photo")
 
 	for _, requisite := range requisites {
 		query = query.Values(
-			requisite.Id,
 			requisite.Name,
 			requisite.Link,
 			requisite.Content,

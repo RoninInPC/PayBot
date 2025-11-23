@@ -25,11 +25,10 @@ func (r *PromocodeRepository) Upsert(ctx context.Context, promocodes []model.Pro
 	}
 
 	query := squirrel.Insert("promocodes").
-		Columns("id", "code", "discount", "expires_at", "used_count")
+		Columns("code", "discount", "expires_at", "used_count")
 
 	for _, promocode := range promocodes {
 		query = query.Values(
-			promocode.Id,
 			promocode.Code,
 			promocode.Discount,
 			promocode.ExpiresAt,

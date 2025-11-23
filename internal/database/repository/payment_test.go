@@ -77,7 +77,7 @@ func TestPaymentRepository_Upsert(t *testing.T) {
 			},
 			wantErr: false,
 			setup: func(ctx context.Context, uow database.UnitOfWork) int64 {
-				user := createTestUser(ctx, t, uow, timePoint.UnixNano())
+				user := createTestUser(ctx, t, uow, timePoint.UnixNano()%1000000)
 				return user.TgID
 			},
 		},
@@ -101,7 +101,7 @@ func TestPaymentRepository_Upsert(t *testing.T) {
 			},
 			wantErr: false,
 			setup: func(ctx context.Context, uow database.UnitOfWork) int64 {
-				user := createTestUser(ctx, t, uow, timePoint.Add(time.Second).UnixNano())
+				user := createTestUser(ctx, t, uow, timePoint.Add(time.Second).UnixNano()%1000000)
 				return user.TgID
 			},
 		},
@@ -198,7 +198,7 @@ func TestPaymentRepository_SelectByUserTgID(t *testing.T) {
 			name: "один платеж пользователя",
 			want: 1,
 			setup: func(ctx context.Context, uow database.UnitOfWork) []int64 {
-				user := createTestUser(ctx, t, uow, timePoint.UnixNano())
+				user := createTestUser(ctx, t, uow, timePoint.UnixNano()%1000000)
 				_, err := uow.PaymentRepo().Upsert(ctx, []model.Payment{
 					{
 						UserTgID:  user.TgID,
@@ -215,8 +215,8 @@ func TestPaymentRepository_SelectByUserTgID(t *testing.T) {
 			name: "несколько платежей нескольких пользователей",
 			want: 3,
 			setup: func(ctx context.Context, uow database.UnitOfWork) []int64 {
-				user1 := createTestUser(ctx, t, uow, timePoint.UnixNano())
-				user2 := createTestUser(ctx, t, uow, timePoint.Add(time.Second).UnixNano())
+				user1 := createTestUser(ctx, t, uow, timePoint.UnixNano()%1000000)
+				user2 := createTestUser(ctx, t, uow, timePoint.Add(1251*time.Microsecond).UnixNano()%1000000)
 
 				_, err := uow.PaymentRepo().Upsert(ctx, []model.Payment{
 					{
@@ -303,7 +303,7 @@ func TestPaymentRepository_SelectAll(t *testing.T) {
 			name: "один платеж",
 			want: 1,
 			setup: func(ctx context.Context, uow database.UnitOfWork) {
-				user := createTestUser(ctx, t, uow, timePoint.UnixNano())
+				user := createTestUser(ctx, t, uow, timePoint.UnixNano()%1000000)
 				_, err := uow.PaymentRepo().Upsert(ctx, []model.Payment{
 					{
 						UserTgID:  user.TgID,
@@ -319,8 +319,8 @@ func TestPaymentRepository_SelectAll(t *testing.T) {
 			name: "несколько платежей",
 			want: 3,
 			setup: func(ctx context.Context, uow database.UnitOfWork) {
-				user1 := createTestUser(ctx, t, uow, timePoint.UnixNano())
-				user2 := createTestUser(ctx, t, uow, timePoint.Add(time.Second).UnixNano())
+				user1 := createTestUser(ctx, t, uow, timePoint.UnixNano()%1000000)
+				user2 := createTestUser(ctx, t, uow, timePoint.Add(1251*time.Microsecond).UnixNano()%1000000)
 
 				_, err := uow.PaymentRepo().Upsert(ctx, []model.Payment{
 					{UserTgID: user1.TgID, Amount: 1000, Timestamp: timePoint, Status: "completed"},
@@ -382,7 +382,7 @@ func TestPaymentRepository_Delete(t *testing.T) {
 			name:     "удаление одного платежа",
 			wantLeft: 0,
 			setup: func(ctx context.Context, uow database.UnitOfWork) []model.Payment {
-				user := createTestUser(ctx, t, uow, timePoint.UnixNano())
+				user := createTestUser(ctx, t, uow, timePoint.UnixNano()%1000000)
 				payments, err := uow.PaymentRepo().Upsert(ctx, []model.Payment{
 					{UserTgID: user.TgID, Amount: 1000, Timestamp: timePoint, Status: "pending"},
 				})
@@ -394,8 +394,8 @@ func TestPaymentRepository_Delete(t *testing.T) {
 			name:     "удаление части платежей",
 			wantLeft: 1,
 			setup: func(ctx context.Context, uow database.UnitOfWork) []model.Payment {
-				user1 := createTestUser(ctx, t, uow, timePoint.UnixNano())
-				user2 := createTestUser(ctx, t, uow, timePoint.Add(time.Second).UnixNano())
+				user1 := createTestUser(ctx, t, uow, timePoint.UnixNano()%1000000)
+				user2 := createTestUser(ctx, t, uow, timePoint.Add(1251*time.Microsecond).UnixNano()%1000000)
 
 				payments, err := uow.PaymentRepo().Upsert(ctx, []model.Payment{
 					{UserTgID: user1.TgID, Amount: 1000, Timestamp: timePoint, Status: "completed"},
@@ -411,7 +411,7 @@ func TestPaymentRepository_Delete(t *testing.T) {
 			name:     "удаление несуществующих платежей (не должно быть ошибки)",
 			wantLeft: 2,
 			setup: func(ctx context.Context, uow database.UnitOfWork) []model.Payment {
-				user := createTestUser(ctx, t, uow, timePoint.UnixNano())
+				user := createTestUser(ctx, t, uow, timePoint.UnixNano()%1000000)
 				_, err := uow.PaymentRepo().Upsert(ctx, []model.Payment{
 					{UserTgID: user.TgID, Amount: 1000, Timestamp: timePoint, Status: "pending"},
 					{UserTgID: user.TgID, Amount: 2000, Timestamp: timePoint, Status: "completed"},
