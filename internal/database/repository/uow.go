@@ -11,15 +11,17 @@ import (
 )
 
 type unitOfWork struct {
-	tx            pgx.Tx
-	userRepo      database.UserRepository
-	paymentRepo   database.PaymentRepository
-	subscrRepo    database.SubscriptionRepository
-	tariffRepo    database.TariffRepository
-	resourceRepo  database.ResourceRepository
-	promocodeRepo database.PromocodeRepository
-	requisiteRepo database.RequisiteRepository
-	featureRepo   database.FeatureRepository
+	tx                  pgx.Tx
+	userRepo            database.UserRepository
+	paymentRepo         database.PaymentRepository
+	subscrRepo          database.SubscriptionRepository
+	tariffRepo          database.TariffRepository
+	resourceRepo        database.ResourceRepository
+	promocodeRepo       database.PromocodeRepository
+	requisiteRepo       database.RequisiteRepository
+	featureRepo         database.FeatureRepository
+	tariffResourceRepo  database.TariffResourceRepository
+	promocodeTariffRepo database.PromocodeTariffRepository
 }
 
 func (u unitOfWork) UserRepo() database.UserRepository {
@@ -52,6 +54,14 @@ func (u unitOfWork) RequisiteRepo() database.RequisiteRepository {
 
 func (u unitOfWork) FeatureRepo() database.FeatureRepository {
 	return u.featureRepo
+}
+
+func (u unitOfWork) TariffResourceRepo() database.TariffResourceRepository {
+	return u.tariffResourceRepo
+}
+
+func (u unitOfWork) PromocodeTariffRepo() database.PromocodeTariffRepository {
+	return u.promocodeTariffRepo
 }
 
 func (u unitOfWork) Commit(ctx context.Context) error {
@@ -106,14 +116,16 @@ func (f UnitOfWorkFactory) New(ctx context.Context, level pgx.TxIsoLevel, fn fun
 
 func (f UnitOfWorkFactory) createUnitOfWork(tx pgx.Tx) database.UnitOfWork {
 	return unitOfWork{
-		tx:            tx,
-		userRepo:      NewUserRepository(tx),
-		paymentRepo:   NewPaymentRepository(tx),
-		subscrRepo:    NewSubscriptionRepository(tx),
-		tariffRepo:    NewTariffRepository(tx),
-		resourceRepo:  NewResourceRepository(tx),
-		promocodeRepo: NewPromocodeRepository(tx),
-		requisiteRepo: NewRequisiteRepository(tx),
-		featureRepo:   NewFeatureRepository(tx),
+		tx:                  tx,
+		userRepo:            NewUserRepository(tx),
+		paymentRepo:         NewPaymentRepository(tx),
+		subscrRepo:          NewSubscriptionRepository(tx),
+		tariffRepo:          NewTariffRepository(tx),
+		resourceRepo:        NewResourceRepository(tx),
+		promocodeRepo:       NewPromocodeRepository(tx),
+		requisiteRepo:       NewRequisiteRepository(tx),
+		featureRepo:         NewFeatureRepository(tx),
+		tariffResourceRepo:  NewTariffResourceRepository(tx),
+		promocodeTariffRepo: NewPromocodeTariffRepository(tx),
 	}
 }

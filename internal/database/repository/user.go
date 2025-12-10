@@ -25,7 +25,7 @@ func (r *UserRepository) Upsert(ctx context.Context, users []model.User) ([]mode
 	}
 
 	query := squirrel.Insert("users").
-		Columns("tg_id", "username", "first_time", "total_sub", "contains_sub")
+		Columns("tg_id", "username", "first_time", "total_sub", "contains_sub", "promocode_id")
 
 	for _, user := range users {
 		query = query.Values(
@@ -34,6 +34,7 @@ func (r *UserRepository) Upsert(ctx context.Context, users []model.User) ([]mode
 			user.FirstTime,
 			user.TotalSub,
 			user.ContainsSub,
+			user.PromocodeID,
 		)
 	}
 
@@ -42,8 +43,9 @@ func (r *UserRepository) Upsert(ctx context.Context, users []model.User) ([]mode
 			username = EXCLUDED.username,
 			first_time = EXCLUDED.first_time,
 			total_sub = EXCLUDED.total_sub,
-			contains_sub = EXCLUDED.contains_sub
-			RETURNING id, tg_id, username, first_time, total_sub, contains_sub
+			contains_sub = EXCLUDED.contains_sub,
+			promocode_id = EXCLUDED.promocode_id
+			RETURNING id, tg_id, username, first_time, total_sub, contains_sub, promocode_id
 `).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
@@ -68,6 +70,7 @@ func (r *UserRepository) Upsert(ctx context.Context, users []model.User) ([]mode
 			&u.FirstTime,
 			&u.TotalSub,
 			&u.ContainsSub,
+			&u.PromocodeID,
 		)
 
 		if err != nil {
@@ -85,7 +88,7 @@ func (r *UserRepository) SelectByTgID(ctx context.Context, tgIDs []int64) ([]mod
 		return nil, nil
 	}
 
-	sql, args, err := squirrel.Select("id", "tg_id", "username", "first_time", "total_sub", "contains_sub").
+	sql, args, err := squirrel.Select("id", "tg_id", "username", "first_time", "total_sub", "contains_sub", "promocode_id").
 		From("users").
 		Where(squirrel.Eq{"tg_id": tgIDs}).
 		PlaceholderFormat(squirrel.Dollar).
@@ -111,6 +114,7 @@ func (r *UserRepository) SelectByTgID(ctx context.Context, tgIDs []int64) ([]mod
 			&u.FirstTime,
 			&u.TotalSub,
 			&u.ContainsSub,
+			&u.PromocodeID,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "rows.Scan")
@@ -131,7 +135,7 @@ func (r *UserRepository) SelectByUsername(ctx context.Context, userNames []strin
 		return nil, nil
 	}
 
-	sql, args, err := squirrel.Select("id", "tg_id", "username", "first_time", "total_sub", "contains_sub").
+	sql, args, err := squirrel.Select("id", "tg_id", "username", "first_time", "total_sub", "contains_sub", "promocode_id").
 		From("users").
 		Where(squirrel.Eq{"username": userNames}).
 		PlaceholderFormat(squirrel.Dollar).
@@ -158,6 +162,7 @@ func (r *UserRepository) SelectByUsername(ctx context.Context, userNames []strin
 			&u.FirstTime,
 			&u.TotalSub,
 			&u.ContainsSub,
+			&u.PromocodeID,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "rows.Scan")
@@ -174,7 +179,7 @@ func (r *UserRepository) SelectByUsername(ctx context.Context, userNames []strin
 }
 
 func (r *UserRepository) SelectAll(ctx context.Context) ([]model.User, error) {
-	sql, args, err := squirrel.Select("id", "tg_id", "username", "first_time", "total_sub", "contains_sub").
+	sql, args, err := squirrel.Select("id", "tg_id", "username", "first_time", "total_sub", "contains_sub", "promocode_id").
 		From("users").
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
@@ -199,6 +204,99 @@ func (r *UserRepository) SelectAll(ctx context.Context) ([]model.User, error) {
 			&u.FirstTime,
 			&u.TotalSub,
 			&u.ContainsSub,
+			&u.PromocodeID,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "rows.Scan")
+		}
+
+		users = append(users, u)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows.Err")
+	}
+
+	return users, nil
+}
+
+// SelectBySubscriptionStatus returns users filtered by subscription status
+func (r *UserRepository) SelectBySubscriptionStatus(ctx context.Context, hasSubscription bool) ([]model.User, error) {
+	sql, args, err := squirrel.Select("id", "tg_id", "username", "first_time", "total_sub", "contains_sub", "promocode_id").
+		From("users").
+		Where(squirrel.Eq{"contains_sub": hasSubscription}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "squirrel.Select.From.Where.PlaceholderFormat.ToSql")
+	}
+
+	rows, err := r.tx.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "tx.Query")
+	}
+	defer rows.Close()
+
+	var users []model.User
+	for rows.Next() {
+		var u model.User
+
+		err = rows.Scan(
+			&u.Id,
+			&u.TgID,
+			&u.Username,
+			&u.FirstTime,
+			&u.TotalSub,
+			&u.ContainsSub,
+			&u.PromocodeID,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "rows.Scan")
+		}
+
+		users = append(users, u)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows.Err")
+	}
+
+	return users, nil
+}
+
+// SelectByPromocodeID returns users who used specific promocodes
+func (r *UserRepository) SelectByPromocodeID(ctx context.Context, promocodeIDs []int64) ([]model.User, error) {
+	if len(promocodeIDs) == 0 {
+		return nil, nil
+	}
+
+	sql, args, err := squirrel.Select("id", "tg_id", "username", "first_time", "total_sub", "contains_sub", "promocode_id").
+		From("users").
+		Where(squirrel.Eq{"promocode_id": promocodeIDs}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "squirrel.Select.From.Where.PlaceholderFormat.ToSql")
+	}
+
+	rows, err := r.tx.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "tx.Query")
+	}
+	defer rows.Close()
+
+	var users []model.User
+	for rows.Next() {
+		var u model.User
+
+		err = rows.Scan(
+			&u.Id,
+			&u.TgID,
+			&u.Username,
+			&u.FirstTime,
+			&u.TotalSub,
+			&u.ContainsSub,
+			&u.PromocodeID,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "rows.Scan")

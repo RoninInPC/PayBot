@@ -216,6 +216,103 @@ func (r *SubscriptionRepository) SelectAll(ctx context.Context) ([]model.Subscri
 	return subscriptions, nil
 }
 
+// SelectActiveSubscriptions returns all active subscriptions (status = 'active' and not expired)
+func (r *SubscriptionRepository) SelectActiveSubscriptions(ctx context.Context) ([]model.Subscription, error) {
+	sql, args, err := squirrel.Select("id", "user_tg_id", "tariff_id", "start_date", "end_date", "status").
+		From("subscriptions").
+		Where(squirrel.And{
+			squirrel.Eq{"status": "active"},
+			squirrel.Or{
+				squirrel.Eq{"end_date": nil},
+				squirrel.Gt{"end_date": squirrel.Expr("NOW()")},
+			},
+		}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "squirrel.Select.From.Where.PlaceholderFormat.ToSql")
+	}
+
+	rows, err := r.tx.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "tx.Query")
+	}
+	defer rows.Close()
+
+	var subscriptions []model.Subscription
+
+	for rows.Next() {
+		var s model.Subscription
+
+		err = rows.Scan(
+			&s.Id,
+			&s.UserTgID,
+			&s.TariffID,
+			&s.StartDate,
+			&s.EndDate,
+			&s.Status,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "rows.Scan")
+		}
+
+		subscriptions = append(subscriptions, s)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows.Err")
+	}
+
+	return subscriptions, nil
+}
+
+// SelectExpiringSoon returns subscriptions expiring within the specified number of days
+func (r *SubscriptionRepository) SelectExpiringSoon(ctx context.Context, days int) ([]model.Subscription, error) {
+	sql, args, err := squirrel.Select("id", "user_tg_id", "tariff_id", "start_date", "end_date", "status").
+		From("subscriptions").
+		Where(squirrel.And{
+			squirrel.NotEq{"end_date": nil},
+			squirrel.Expr("end_date BETWEEN NOW() AND NOW() + INTERVAL '"+squirrel.Placeholders(1)+" days'", days),
+		}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "squirrel.Select.From.Where.PlaceholderFormat.ToSql")
+	}
+
+	rows, err := r.tx.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "tx.Query")
+	}
+	defer rows.Close()
+
+	var subscriptions []model.Subscription
+
+	for rows.Next() {
+		var s model.Subscription
+
+		err = rows.Scan(
+			&s.Id,
+			&s.UserTgID,
+			&s.TariffID,
+			&s.StartDate,
+			&s.EndDate,
+			&s.Status,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "rows.Scan")
+		}
+
+		subscriptions = append(subscriptions, s)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows.Err")
+	}
+
+	return subscriptions, nil
+}
+
 func (r *SubscriptionRepository) Delete(ctx context.Context, subscriptions []model.Subscription) error {
 	if len(subscriptions) == 0 {
 		return nil

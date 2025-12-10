@@ -9,4 +9,5 @@ type User struct {
 	FirstTime   time.Time
 	TotalSub    int
 	ContainsSub bool
+	PromocodeID *int64
 }

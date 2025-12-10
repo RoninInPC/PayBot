@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
@@ -188,16 +189,16 @@ func TestTariffRepository_SelectByID(t *testing.T) {
 	uowf := NewUnitOfWorkFactory(dbPool)
 
 	tests := []struct {
-		name       string
-		insert     []model.Tariff
-		selectName []string
-		want       int
+		name     string
+		insert   []model.Tariff
+		selectID []string
+		want     int
 	}{
 		{
-			name:       "empty",
-			insert:     nil,
-			selectName: nil,
-			want:       0,
+			name:     "empty",
+			insert:   nil,
+			selectID: nil,
+			want:     0,
 		},
 		{
 			name: "single",
@@ -205,8 +206,8 @@ func TestTariffRepository_SelectByID(t *testing.T) {
 				{Name: "basic", Price: 100, DurationDays: 30},
 				{Name: "basic2", Price: 100, DurationDays: 30},
 			},
-			selectName: []string{"basic"},
-			want:       1,
+			selectID: nil, // will be populated with first tariff ID
+			want:     1,
 		},
 		{
 			name: "multiple",
@@ -214,8 +215,8 @@ func TestTariffRepository_SelectByID(t *testing.T) {
 				{Name: "silver", Price: 200, DurationDays: 60},
 				{Name: "gold", Price: 300, DurationDays: 90},
 			},
-			selectName: []string{"silver", "gold"},
-			want:       2,
+			selectID: nil, // will be populated with both tariff IDs
+			want:     2,
 		},
 	}
 
@@ -229,12 +230,18 @@ func TestTariffRepository_SelectByID(t *testing.T) {
 					require.NoError(t, err)
 					require.Len(t, upserted, len(tt.insert))
 
+					// Collect IDs for selection
+					selectIDs := make([]string, 0, tt.want)
 					for i, u := range upserted {
 						tt.insert[i].Id = u.Id
+						if i < tt.want {
+							selectIDs = append(selectIDs, fmt.Sprintf("%d", u.Id))
+						}
 					}
+					tt.selectID = selectIDs
 				}
 
-				selected, err = uow.TariffRepo().SelectByName(ctx, tt.selectName)
+				selected, err = uow.TariffRepo().SelectByID(ctx, tt.selectID)
 				require.NoError(t, err)
 
 				return nil
