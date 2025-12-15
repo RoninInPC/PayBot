@@ -21,7 +21,7 @@ func InitBot(token string) (*TelegramBot, error) {
 		Goroutines: *telegram.InitGoroutines(),
 		TelegramCommands: telegram.TelegramCommands{
 			telegram.MakeButtonAnalyser(),
-			telegram.MakeUserRequestConfirmed(nil)},
+		},
 		bot: api}, nil
 }
 

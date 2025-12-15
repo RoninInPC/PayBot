@@ -1,10 +1,13 @@
 package telegram
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	telemux "github.com/and3rson/telemux/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"main/internal/database/entitybase"
-	"main/internal/entity"
+	"github.com/jackc/pgx/v5"
+	"main/internal/database/repository/factory"
 	"strings"
 )
 
@@ -82,36 +85,48 @@ func MakeButtonAnalyser() TelegramCommand {
 	}
 }
 
-func MakeUserRequestConfirmed(base entitybase.EntityBase[entity.User]) TelegramCommand {
+func MakeUserRequestConfirmed(fac factory.UnitOfWorkFactory) TelegramCommand {
 	return TelegramCommand{
 		"Request",
 		"",
 		func(u *telemux.Update) bool {
 			return u.ChatJoinRequest != nil
 		},
-		UserCheckActionStruct{
-			Base: base,
-			SimpleAction: func(base entitybase.EntityBase[entity.User], u *telemux.Update) {
-				if base != nil {
+		FactoryActionStruct{
+			Factory: fac,
+			SimpleAction: func(fac factory.UnitOfWorkFactory, u *telemux.Update) {
+				if fac != nil {
 					u.Bot.Send(tgbotapi.DeclineChatJoinRequest{
 						ChatConfig: tgbotapi.ChatConfig{ChatID: u.ChatJoinRequest.Chat.ID},
 						UserID:     u.ChatJoinRequest.From.ID,
 					})
 					return
 				}
-				user, err := base.Get(entity.User{UserName: u.ChatJoinRequest.From.UserName})
-				if err != nil || user.ID == 0 {
-					u.Bot.Send(tgbotapi.DeclineChatJoinRequest{
-						ChatConfig: tgbotapi.ChatConfig{ChatID: u.ChatJoinRequest.Chat.ID},
-						UserID:     u.ChatJoinRequest.From.ID,
-					})
-					return
-				}
+				err := fac.New(context.Background(), pgx.Serializable, func(uow factory.UnitOfWork) error {
 
-				u.Bot.Send(tgbotapi.ApproveChatJoinRequestConfig{
-					ChatConfig: tgbotapi.ChatConfig{ChatID: u.ChatJoinRequest.Chat.ID},
-					UserID:     u.ChatJoinRequest.From.ID,
+					users, err := uow.UserRepo().SelectByUsername(context.Background(), []string{u.ChatJoinRequest.From.UserName})
+
+					if err != nil || len(users) == 0 {
+						_, errSend := u.Bot.Send(tgbotapi.DeclineChatJoinRequest{
+							ChatConfig: tgbotapi.ChatConfig{ChatID: u.ChatJoinRequest.Chat.ID},
+							UserID:     u.ChatJoinRequest.From.ID,
+						})
+						return errors.New("ErrorSend DeclineChatJoinRequest " + errSend.Error())
+					}
+
+					_, errSend := u.Bot.Send(tgbotapi.ApproveChatJoinRequestConfig{
+						ChatConfig: tgbotapi.ChatConfig{ChatID: u.ChatJoinRequest.Chat.ID},
+						UserID:     u.ChatJoinRequest.From.ID,
+					})
+					if errSend != nil {
+						return errors.New("ErrorSend ApproveChatJoinRequestConfig " + errSend.Error())
+					}
+
+					return err
 				})
+				if err != nil {
+					fmt.Println("Error MakeUserRequestConfirmed", err.Error())
+				}
 			},
 		},
 	}

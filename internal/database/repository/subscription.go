@@ -2,12 +2,12 @@ package repository
 
 import (
 	"context"
+	repo "main/internal/database/repository/factory"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
 	"github.com/pkg/errors"
 
-	repo "main/internal/database"
 	"main/internal/model"
 )
 

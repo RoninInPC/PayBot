@@ -104,7 +104,8 @@ type UnitOfWork interface {
 }
 
 type UnitOfWorkFactory interface {
-	New(ctx context.Context, isoLevel pgx.TxIsoLevel) (UnitOfWork, error)
+	New(ctx context.Context, isoLevel pgx.TxIsoLevel, fn func(uow UnitOfWork) error) error
+	Get(ctx context.Context, isoLevel pgx.TxIsoLevel) (UnitOfWork, error)
 }
 
 /*

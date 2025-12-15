@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"main/internal/database/repository/factory"
+	"main/internal/database/repository/testcontainer"
 	"testing"
 	"time"
 
@@ -12,8 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"main/internal/database"
-	"main/internal/database/testcontainer"
 	"main/internal/model"
 )
 
@@ -126,7 +126,7 @@ func TestUserRepository_Upsert(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var upserted []model.User
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
 				upserted, err = uow.UserRepo().Upsert(ctx, tt.users)
 				if err != nil {
 					return errors.Wrap(err, "uow.UserRepo.Upsert")
@@ -227,7 +227,7 @@ func TestUserRepository_SelectByTgID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var users []model.User
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
 				if len(tt.insert) > 0 {
 					upserted, err := uow.UserRepo().Upsert(ctx, tt.insert)
 					require.NoError(t, err)
@@ -322,7 +322,7 @@ func TestUserRepository_SelectByUsername(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var users []model.User
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
 				if len(tt.insert) > 0 {
 					var upserted []model.User
 					upserted, err = uow.UserRepo().Upsert(ctx, tt.insert)
@@ -423,7 +423,7 @@ func TestUserRepository_SelectAll(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var users []model.User
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
 				if len(tt.insert) > 0 {
 					var upserted []model.User
 
@@ -541,7 +541,7 @@ func TestUserRepository_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var users []model.User
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
 				expected := make(map[int64]model.User)
 
 				if len(tt.toInsert) > 0 {
