@@ -25,11 +25,10 @@ func (r *PromocodeRepository) Upsert(ctx context.Context, promocodes []model.Pro
 	}
 
 	query := squirrel.Insert("promocodes").
-		Columns("id", "code", "discount", "expires_at", "used_count")
+		Columns("code", "discount", "expires_at", "used_count")
 
 	for _, promocode := range promocodes {
 		query = query.Values(
-			promocode.Id,
 			promocode.Code,
 			promocode.Discount,
 			promocode.ExpiresAt,
@@ -134,6 +133,53 @@ func (r *PromocodeRepository) SelectByID(ctx context.Context, ids []int64) ([]mo
 	sql, args, err := squirrel.Select("id", "code", "discount", "expires_at", "used_count").
 		From("promocodes").
 		Where(squirrel.Eq{"id": ids}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "squirrel.Select.From.Where.PlaceholderFormat.ToSql")
+	}
+
+	rows, err := r.tx.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "tx.Query")
+	}
+	defer rows.Close()
+
+	var promocodes []model.Promocode
+
+	for rows.Next() {
+		var p model.Promocode
+
+		err = rows.Scan(
+			&p.Id,
+			&p.Code,
+			&p.Discount,
+			&p.ExpiresAt,
+			&p.UsedCount,
+		)
+
+		if err != nil {
+			return nil, errors.Wrap(err, "rows.Scan")
+		}
+
+		promocodes = append(promocodes, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows.Err")
+	}
+
+	return promocodes, nil
+}
+
+// SelectValidPromocodes returns promocodes that are still valid (not expired)
+func (r *PromocodeRepository) SelectValidPromocodes(ctx context.Context) ([]model.Promocode, error) {
+	sql, args, err := squirrel.Select("id", "code", "discount", "expires_at", "used_count").
+		From("promocodes").
+		Where(squirrel.Or{
+			squirrel.Eq{"expires_at": nil},
+			squirrel.Gt{"expires_at": squirrel.Expr("NOW()")},
+		}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {

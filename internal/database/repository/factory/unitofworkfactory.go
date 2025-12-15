@@ -1,4 +1,4 @@
-package factory
+package database
 
 import (
 	"context"
@@ -12,6 +12,8 @@ type UserRepository interface {
 	Upsert(ctx context.Context, users []model.User) ([]model.User, error)
 	SelectByTgID(ctx context.Context, tgIDs []int64) ([]model.User, error)
 	SelectByUsername(ctx context.Context, userNames []string) ([]model.User, error)
+	SelectBySubscriptionStatus(ctx context.Context, hasSubscription bool) ([]model.User, error)
+	SelectByPromocodeID(ctx context.Context, promocodeIDs []int64) ([]model.User, error)
 	SelectAll(ctx context.Context) ([]model.User, error)
 	Delete(ctx context.Context, users []model.User) error
 }
@@ -19,6 +21,7 @@ type UserRepository interface {
 type PaymentRepository interface {
 	Upsert(ctx context.Context, payments []model.Payment) ([]model.Payment, error)
 	SelectByUserTgID(ctx context.Context, userTgIDs []int64) ([]model.Payment, error)
+	SelectByStatus(ctx context.Context, statuses []string) ([]model.Payment, error)
 	SelectAll(ctx context.Context) ([]model.Payment, error)
 	Delete(ctx context.Context, payments []model.Payment) error
 }
@@ -27,6 +30,8 @@ type SubscriptionRepository interface {
 	Upsert(ctx context.Context, subscriptions []model.Subscription) ([]model.Subscription, error)
 	SelectByUserID(ctx context.Context, userTgIDs []int64) ([]model.Subscription, error)
 	SelectByTariffID(ctx context.Context, tariffIDs []int64) ([]model.Subscription, error)
+	SelectActiveSubscriptions(ctx context.Context) ([]model.Subscription, error)
+	SelectExpiringSoon(ctx context.Context, days int) ([]model.Subscription, error)
 	SelectAll(ctx context.Context) ([]model.Subscription, error)
 	Delete(ctx context.Context, subscriptions []model.Subscription) error
 }
@@ -51,6 +56,7 @@ type PromocodeRepository interface {
 	Upsert(ctx context.Context, promocodes []model.Promocode) ([]model.Promocode, error)
 	SelectByCode(ctx context.Context, codes []string) ([]model.Promocode, error)
 	SelectByID(ctx context.Context, ids []int64) ([]model.Promocode, error)
+	SelectValidPromocodes(ctx context.Context) ([]model.Promocode, error)
 	SelectAll(ctx context.Context) ([]model.Promocode, error)
 	Delete(ctx context.Context, promocodes []model.Promocode) error
 }
@@ -63,6 +69,24 @@ type RequisiteRepository interface {
 	Delete(ctx context.Context, requisites []model.Requisite) error
 }
 
+type FeatureRepository interface {
+	SelectUsersByTariff(ctx context.Context, tariffID int64) ([]model.User, error)
+}
+
+type TariffResourceRepository interface {
+	Assign(ctx context.Context, tariffIDs []int64, resourceIDs []int64) error
+	Unassign(ctx context.Context, tariffIDs []int64, resourceIDs []int64) error
+	SelectResourcesByTariffID(ctx context.Context, tariffIDs []int64) ([]model.Resource, error)
+	SelectTariffsByResourceID(ctx context.Context, resourceIDs []int64) ([]model.Tariff, error)
+}
+
+type PromocodeTariffRepository interface {
+	Assign(ctx context.Context, promocodeIDs []int64, tariffIDs []int64) error
+	Unassign(ctx context.Context, promocodeIDs []int64, tariffIDs []int64) error
+	SelectTariffsByPromocodeID(ctx context.Context, promocodeIDs []int64) ([]model.Tariff, error)
+	SelectPromocodesByTariffID(ctx context.Context, tariffIDs []int64) ([]model.Promocode, error)
+}
+
 type UnitOfWork interface {
 	UserRepo() UserRepository
 	PaymentRepo() PaymentRepository
@@ -71,6 +95,10 @@ type UnitOfWork interface {
 	ResourceRepo() ResourceRepository
 	PromocodeRepo() PromocodeRepository
 	RequisiteRepo() RequisiteRepository
+	FeatureRepo() FeatureRepository
+	TariffResourceRepo() TariffResourceRepository
+	PromocodeTariffRepo() PromocodeTariffRepository
+
 	Commit(ctx context.Context) error
 	Rollback(ctx context.Context) error
 }

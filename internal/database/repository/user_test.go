@@ -124,8 +124,6 @@ func TestUserRepository_Upsert(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.NoError(t, err)
-
 			var upserted []model.User
 
 			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
@@ -146,8 +144,13 @@ func TestUserRepository_Upsert(t *testing.T) {
 
 			require.Len(t, upserted, len(tt.users))
 
-			for _, user := range upserted {
+			for i, user := range upserted {
 				require.NotEqual(t, user.Id, 0)
+				require.Equal(t, user.ContainsSub, tt.users[i].ContainsSub)
+				require.Equal(t, user.TotalSub, tt.users[i].TotalSub)
+				require.Equal(t, user.FirstTime.UnixMicro(), tt.users[i].FirstTime.UnixMicro())
+				require.Equal(t, user.TgID, tt.users[i].TgID)
+				require.Equal(t, user.Username, tt.users[i].Username)
 			}
 
 			truncateUsers(ctx, t, db)

@@ -38,13 +38,7 @@ func (r *PaymentRepository) Upsert(ctx context.Context, payments []model.Payment
 	}
 
 	sql, args, err := query.
-		Suffix(`
-		ON CONFLICT (user_tg_id) DO UPDATE SET
-			amount = EXCLUDED.amount,
-			timestamp = EXCLUDED.timestamp,
-			status = EXCLUDED.status,
-			receipt_photo = EXCLUDED.receipt_photo
-		RETURNING id, user_tg_id, amount, timestamp, status, receipt_photo`).
+		Suffix(`RETURNING id, user_tg_id, amount, timestamp, status, receipt_photo`).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
@@ -89,9 +83,56 @@ func (r *PaymentRepository) SelectByUserTgID(ctx context.Context, userTgIDs []in
 		return nil, nil
 	}
 
-	sql, args, err := squirrel.Select("id", "user_id", "amount", "timestamp", "status", "receipt_photo").
+	sql, args, err := squirrel.Select("id", "user_tg_id", "amount", "timestamp", "status", "receipt_photo").
 		From("payments").
-		Where(squirrel.Eq{"user_id": userTgIDs}).
+		Where(squirrel.Eq{"user_tg_id": userTgIDs}).
+		PlaceholderFormat(squirrel.Dollar).
+		ToSql()
+	if err != nil {
+		return nil, errors.Wrap(err, "squirrel.Select.From.Where.PlaceholderFormat.ToSql")
+	}
+
+	rows, err := r.tx.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "tx.Query")
+	}
+	defer rows.Close()
+
+	var payments []model.Payment
+	for rows.Next() {
+		var p model.Payment
+
+		err = rows.Scan(
+			&p.Id,
+			&p.UserTgID,
+			&p.Amount,
+			&p.Timestamp,
+			&p.Status,
+			&p.ReceiptPhoto,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "rows.Scan")
+		}
+
+		payments = append(payments, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "rows.Err")
+	}
+
+	return payments, nil
+}
+
+// SelectByStatus returns payments filtered by status
+func (r *PaymentRepository) SelectByStatus(ctx context.Context, statuses []string) ([]model.Payment, error) {
+	if len(statuses) == 0 {
+		return nil, nil
+	}
+
+	sql, args, err := squirrel.Select("id", "user_tg_id", "amount", "timestamp", "status", "receipt_photo").
+		From("payments").
+		Where(squirrel.Eq{"status": statuses}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {
@@ -131,7 +172,7 @@ func (r *PaymentRepository) SelectByUserTgID(ctx context.Context, userTgIDs []in
 }
 
 func (r *PaymentRepository) SelectAll(ctx context.Context) ([]model.Payment, error) {
-	sql, args, err := squirrel.Select("id", "user_id", "amount", "timestamp", "status", "receipt_photo").
+	sql, args, err := squirrel.Select("id", "user_tg_id", "amount", "timestamp", "status", "receipt_photo").
 		From("payments").
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
@@ -182,7 +223,7 @@ func (r *PaymentRepository) Delete(ctx context.Context, payments []model.Payment
 	}
 
 	sql, args, err := squirrel.Delete("payments").
-		Where(squirrel.Eq{"user_id": userIDs}).
+		Where(squirrel.Eq{"user_tg_id": userIDs}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()
 	if err != nil {

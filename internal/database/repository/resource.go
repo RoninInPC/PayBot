@@ -25,11 +25,10 @@ func (r *ResourceRepository) Upsert(ctx context.Context, resources []model.Resou
 	}
 
 	query := squirrel.Insert("resources").
-		Columns("id", "chat_id", "description")
+		Columns("chat_id", "description")
 
 	for _, resource := range resources {
 		query = query.Values(
-			resource.Id,
 			resource.ChatID,
 			resource.Description,
 		)
@@ -213,7 +212,7 @@ func (r *ResourceRepository) Delete(ctx context.Context, resources []model.Resou
 		ids = append(ids, resource.Id)
 	}
 
-	sql, args, err := squirrel.Delete("users").
+	sql, args, err := squirrel.Delete("resources").
 		Where(squirrel.Eq{"id": ids}).
 		PlaceholderFormat(squirrel.Dollar).
 		ToSql()

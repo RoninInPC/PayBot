@@ -13,6 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"main/internal/database"
+	"main/internal/database/testcontainer"
 	"main/internal/model"
 )
 
@@ -72,7 +74,7 @@ func TestTariffRepository_Upsert(t *testing.T) {
 
 			var upserted []model.Tariff
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
 				upserted, err = uow.TariffRepo().Upsert(ctx, tt.tariffs)
 				if err != nil {
 					return errors.Wrap(err, "uow.TariffRepo.Upsert")
@@ -149,7 +151,7 @@ func TestTariffRepository_SelectByName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var selected []model.Tariff
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
 				if len(tt.insert) > 0 {
 					upserted, err := uow.TariffRepo().Upsert(ctx, tt.insert)
 					require.NoError(t, err)
@@ -223,7 +225,7 @@ func TestTariffRepository_SelectByID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var selected []model.Tariff
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
 				if len(tt.insert) > 0 {
 					upserted, err := uow.TariffRepo().Upsert(ctx, tt.insert)
 					require.NoError(t, err)
@@ -309,7 +311,7 @@ func TestTariffRepository_SelectAll(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var tariffs []model.Tariff
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
 				if len(tt.insert) > 0 {
 					var upserted []model.Tariff
 
@@ -421,7 +423,7 @@ func TestTariffRepository_Delete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var tariffs []model.Tariff
 
-			err = uowf.New(ctx, pgx.ReadCommitted, func(uow factory.UnitOfWork) error {
+			err = uowf.New(ctx, pgx.ReadCommitted, func(uow database.UnitOfWork) error {
 				if len(tt.toInsert) > 0 {
 					upserted, err := uow.TariffRepo().Upsert(ctx, tt.toInsert)
 					require.NoError(t, err)

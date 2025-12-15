@@ -3,8 +3,8 @@ CREATE TABLE tariffs
 (
     id            SERIAL PRIMARY KEY,
     name          VARCHAR(255) UNIQUE NOT NULL,
-    price         BIGINT       NOT NULL CHECK (price >= 0),
-    duration_days INTEGER      NOT NULL CHECK (duration_days > 0)
+    price         BIGINT              NOT NULL CHECK (price >= 0),
+    duration_days INTEGER             NOT NULL CHECK (duration_days > 0)
 );
 
 -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
@@ -32,8 +32,8 @@ CREATE TABLE requisites
 (
     id      SERIAL PRIMARY KEY,
     name    VARCHAR(255) NOT NULL,
-    link    TEXT UNIQUE NOT NULL,
-    content TEXT NOT NULL,
+    link    TEXT UNIQUE  NOT NULL,
+    content TEXT         NOT NULL,
     photo   BYTEA
 );
 
@@ -55,7 +55,7 @@ CREATE INDEX idx_users_tg_id ON users (tg_id);
 CREATE TABLE payments
 (
     id            SERIAL PRIMARY KEY,
-    user_tg_id       INTEGER     NOT NULL REFERENCES users (tg_id) ON DELETE CASCADE,
+    user_tg_id    INTEGER     NOT NULL REFERENCES users (tg_id) ON DELETE CASCADE,
     amount        BIGINT      NOT NULL CHECK (amount >= 0),
     timestamp     TIMESTAMPTZ DEFAULT NOW(),
     status        VARCHAR(50) NOT NULL,
@@ -69,11 +69,11 @@ CREATE INDEX idx_payments_status ON payments (status);
 CREATE TABLE subscriptions
 (
     id         SERIAL PRIMARY KEY,
-    user_tg_id    INTEGER     NOT NULL REFERENCES users (tg_id) ON DELETE CASCADE,
-    tariff_id  INTEGER     NOT NULL REFERENCES tariffs (id),
-    start_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    user_tg_id INTEGER UNIQUE NOT NULL REFERENCES users (tg_id) ON DELETE CASCADE,
+    tariff_id  INTEGER        NOT NULL REFERENCES tariffs (id),
+    start_date TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
     end_date   TIMESTAMPTZ,
-    status     VARCHAR(50) NOT NULL
+    status     VARCHAR(50)    NOT NULL
 );
 
 CREATE INDEX idx_subscriptions_user_id ON subscriptions (user_tg_id);
