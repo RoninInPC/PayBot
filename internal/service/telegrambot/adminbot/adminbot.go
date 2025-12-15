@@ -22,6 +22,7 @@ func InitAdminBot(token string, queueFromAdmin queue.Queue[entity.MessageFromAdm
 	if err != nil {
 		panic(err)
 	}
+	state := telegram.InitState(sets)
 	bot.TelegramCommands = bot.AddCommand(telegram.MakeUserRequestConfirmed(factory))
-	return AdminBot{TelegramBot: *bot, queueFromAdmin: queueFromAdmin, queueFromUser: queueFromUser, factory: factory, state: telegram.InitState(sets)}
+	return AdminBot{TelegramBot: *bot, queueFromAdmin: queueFromAdmin, queueFromUser: queueFromUser, factory: factory, state: state}
 }

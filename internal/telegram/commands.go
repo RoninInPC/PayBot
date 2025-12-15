@@ -92,7 +92,7 @@ func MakeUserRequestConfirmed(fac factory.UnitOfWorkFactory) TelegramCommand {
 		func(u *telemux.Update) bool {
 			return u.ChatJoinRequest != nil
 		},
-		UserCheckActionStruct{
+		FactoryActionStruct{
 			Factory: fac,
 			SimpleAction: func(fac factory.UnitOfWorkFactory, u *telemux.Update) {
 				if fac != nil {

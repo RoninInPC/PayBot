@@ -19,13 +19,13 @@ func (s SimpleActionStruct) Action(u *telemux.Update) {
 	s.SimpleAction(u)
 }
 
-type UserCheckAction func(factory factory.UnitOfWorkFactory, u *telemux.Update)
+type FactoryAction func(factory factory.UnitOfWorkFactory, u *telemux.Update)
 
-type UserCheckActionStruct struct {
+type FactoryActionStruct struct {
 	Factory      factory.UnitOfWorkFactory
-	SimpleAction UserCheckAction
+	SimpleAction FactoryAction
 }
 
-func (s UserCheckActionStruct) Action(u *telemux.Update) {
+func (s FactoryActionStruct) Action(u *telemux.Update) {
 	s.SimpleAction(s.Factory, u)
 }
