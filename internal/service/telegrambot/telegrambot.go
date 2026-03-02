@@ -1,18 +1,22 @@
 package telegrambot
 
 import (
+	"main/internal/telegram"
+	"time"
+
 	"github.com/and3rson/telemux/v2"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"main/internal/telegram"
 )
 
 type TelegramBot struct {
 	telegram.Goroutines
 	telegram.TelegramCommands
-	bot *tgbotapi.BotAPI
+	admins  []int64
+	channel chan tgbotapi.Chattable
+	bot     *tgbotapi.BotAPI
 }
 
-func InitBot(token string) (*TelegramBot, error) {
+func InitBot(token string, admins []int64) (*TelegramBot, error) {
 	api, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		return nil, err
@@ -22,7 +26,9 @@ func InitBot(token string) (*TelegramBot, error) {
 		TelegramCommands: telegram.TelegramCommands{
 			telegram.MakeButtonAnalyser(),
 		},
-		bot: api}, nil
+		channel: make(chan tgbotapi.Chattable, 1000),
+		admins:  admins,
+		bot:     api}, nil
 }
 
 func (telegramBot *TelegramBot) initBotMenu() {
@@ -60,7 +66,20 @@ func (telegramBot *TelegramBot) dispatchUpdates() {
 	}
 }
 
+func (telegramBot *TelegramBot) Sender() telegram.Sender {
+	return telegram.InitTelegramSender(telegramBot.channel)
+}
+
 func (telegramBot *TelegramBot) Work() {
 	telegramBot.initBotMenu()
+	go func() {
+		for chattable := range telegramBot.channel {
+			_, err := telegramBot.bot.Send(chattable)
+			if err != nil {
+				telegramBot.channel <- chattable
+				time.Sleep(time.Millisecond * 10)
+			}
+		}
+	}()
 	telegramBot.dispatchUpdates()
 }

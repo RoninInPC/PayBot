@@ -1,8 +1,9 @@
 package telegram
 
 import (
-	"github.com/and3rson/telemux/v2"
 	"main/internal/database/repository/factory"
+
+	"github.com/and3rson/telemux/v2"
 )
 
 type Action interface {
@@ -19,13 +20,15 @@ func (s SimpleActionStruct) Action(u *telemux.Update) {
 	s.SimpleAction(u)
 }
 
-type FactoryAction func(factory factory.UnitOfWorkFactory, u *telemux.Update)
+type FactoryAction func(sender Sender, factory database.UnitOfWorkFactory, u *telemux.Update, admins []int64)
 
 type FactoryActionStruct struct {
-	Factory      factory.UnitOfWorkFactory
+	Sender       Sender
+	Factory      database.UnitOfWorkFactory
 	SimpleAction FactoryAction
+	Admins       []int64
 }
 
 func (s FactoryActionStruct) Action(u *telemux.Update) {
-	s.SimpleAction(s.Factory, u)
+	s.SimpleAction(s.Sender, s.Factory, u, s.Admins)
 }

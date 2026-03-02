@@ -1,23 +1,19 @@
 package userbot
 
 import (
-	"main/internal/database/queue"
-	"main/internal/database/repository/factory"
-	"main/internal/entity"
+	database "main/internal/database/repository/factory"
 	"main/internal/service/telegrambot"
 	"main/internal/service/telegrambot/userbot/functions"
 	"main/internal/telegram"
 )
 
 type UserBot struct {
-	queueFromAdmin queue.Queue[entity.MessageFromAdminBot]
-	queueFromUser  queue.Queue[entity.MessageFromUserBot]
-	factory        factory.UnitOfWorkFactory
+	factory database.UnitOfWorkFactory
 	telegrambot.TelegramBot
 }
 
-func InitUserBot(token string, queueFromAdmin queue.Queue[entity.MessageFromAdminBot], queueFromUser queue.Queue[entity.MessageFromUserBot], factoryOfUnits factory.UnitOfWorkFactory) UserBot {
-	bot, err := telegrambot.InitBot(token)
+func InitUserBot(token string, admins []int64, factoryOfUnits database.UnitOfWorkFactory) UserBot {
+	bot, err := telegrambot.InitBot(token, admins)
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +23,9 @@ func InitUserBot(token string, queueFromAdmin queue.Queue[entity.MessageFromAdmi
 				"start",
 				"Начнём?",
 				telegram.FactoryActionStruct{
+
+					Admins:       admins,
 					Factory:      factoryOfUnits,
 					SimpleAction: functions.StartUserBot}))
-	return UserBot{TelegramBot: *bot, queueFromAdmin: queueFromAdmin, queueFromUser: queueFromUser, factory: factoryOfUnits}
+	return UserBot{TelegramBot: *bot, factory: factoryOfUnits}
 }
